@@ -1,6 +1,6 @@
 NAME = ./ft_strace
 
-SRC = main.c print_func.c
+SRC = main.c print_func.c spec_print.c
 
 OBJ = $(SRC:.c=.o)
 

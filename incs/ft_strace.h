@@ -12,11 +12,12 @@
 # include <sys/uio.h>
 # include <errno.h>
 # include <elf.h>
+# include <stdbool.h>
 
 void		exit_error(char *name, char *msg);
+void	*read_process_memory(pid_t pid, unsigned long addr, int size);
 
-
-//OUTPUT FUNCS
+//OUTPUT TYPE_FUNCS
 void		print_int(int nb);
 void		print_uint(unsigned int nb);
 void		print_sizet(size_t size);
@@ -40,4 +41,9 @@ void		print_ucharptr(unsigned char *str);
 void		print_constcharptr(const char *str);
 void		print_charptrptr(const char **array);
 
+
+//OUTPUT SYSCALL_FUNCS
+void		print_read(pid_t pid, struct user_regs_struct regs);
+void		print_pread64(pid_t pid, struct user_regs_struct regs);
+void		print_getrandom(pid_t pid, struct user_regs_struct regs);
 #endif
