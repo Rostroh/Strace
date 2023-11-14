@@ -6,32 +6,32 @@ void		exit_error(char *name, char *msg) {
 }
 
 void		print_reg(struct user_regs_struct regs) {
-  printf("r15 = 0x%lx\n", regs.r15);
-  printf("r14 = 0x%lx\n", regs.r14);
-  printf("r13 = 0x%lx\n", regs.r13);
-  printf("r12 = 0x%lx\n", regs.r12);
-  printf("rbp = 0x%lx\n", regs.rbp);
-  printf("rbx = 0x%lx\n", regs.rbx);
-  printf("r8 = 0x%lx\n", regs.r8);
-  printf("r9 = 0x%lx\n", regs.r9);
-  printf("r10 = 0x%lx\n", regs.r10);
-  printf("r11 = 0x%lx\n", regs.r11);
-  printf("rax = 0x%lx\n", regs.rax);
-  printf("rcx = 0x%lx\n", regs.rcx);
-  printf("rdx = 0x%lx\n", regs.rdx);
-  printf("rsi = 0x%lx\n", regs.rsi);
-  printf("rdi = 0x%lx\n", regs.rdi);
-  printf("orig_rax = 0x%lx\n", regs.orig_rax);
-  printf("rip = 0x%lx\n", regs.rip);
-  printf("cs = 0x%lx\n", regs.cs);
-  printf("eflags = 0x%lx\n", regs.eflags);
-  printf("rsp = 0x%lx\n", regs.rsp);
-  printf("ss = 0x%lx\n", regs.ss);
-  printf("fs_base = 0x%lx\n", regs.fs_base);
-  printf("gs_base = 0x%lx\n", regs.gs_base);
-  printf("es = 0x%lx\n", regs.es);
-  printf("fs = 0x%lx\n", regs.fs);
-  printf("gs = 0x%lx\n", regs.gs);
+/*	printf("r15 = 0x%lx\n", regs.r15);
+	printf("r14 = 0x%lx\n", regs.r14);
+	printf("r13 = 0x%lx\n", regs.r13);
+	printf("r12 = 0x%lx\n", regs.r12);
+	printf("rbp = 0x%lx\n", regs.rbp);
+	printf("rbx = 0x%lx\n", regs.rbx);*/
+	printf("r8 = 0x%lx\n", regs.r8);
+	printf("r9 = 0x%lx\n", regs.r9);
+	printf("r10 = 0x%lx\n", regs.r10);
+	printf("r11 = 0x%lx\n", regs.r11);
+	printf("rax = 0x%lx\n", regs.rax);
+	printf("rcx = 0x%lx\n", regs.rcx);
+	printf("rdx = 0x%lx\n", regs.rdx);
+	printf("rsi = 0x%lx\n", regs.rsi);
+	printf("rdi = 0x%lx\n", regs.rdi);
+	printf("orig_rax = 0x%lx\n", regs.orig_rax);
+/*	printf("rip = 0x%lx\n", regs.rip);
+	printf("cs = 0x%lx\n", regs.cs);
+	printf("eflags = 0x%lx\n", regs.eflags);
+	printf("rsp = 0x%lx\n", regs.rsp);
+	printf("ss = 0x%lx\n", regs.ss);
+	printf("fs_base = 0x%lx\n", regs.fs_base);
+	printf("gs_base = 0x%lx\n", regs.gs_base);
+	printf("es = 0x%lx\n", regs.es);
+	printf("fs = 0x%lx\n", regs.fs);
+	printf("gs = 0x%lx\n", regs.gs);*/
 }
 
 void	*read_process_memory(pid_t pid, unsigned long addr, int size) {
@@ -143,7 +143,7 @@ bool		print_spec(pid_t pid, struct user_regs_struct regs)
 	return false;
 }
 
-void		print64(pid_t tracee, struct user_regs_struct regs) {
+void		print64(pid_t tracee, struct user_regs_struct regs, int sysret) {
 	ft_printf("%s(", sysinfo_64[regs.orig_rax].sysname);
 	if (print_spec(tracee, regs))
 		;//print_spec(tracee, regs);
@@ -175,14 +175,14 @@ void		print64(pid_t tracee, struct user_regs_struct regs) {
 	}
 	ft_printf(")\t\t = ");
 	if (sysinfo_64[regs.orig_rax].ret == 1)
-		ft_printf("%p\n", regs.rax);
+		ft_printf("%p\n", sysret);//regs.rax);
 	else
-		ft_printf("%d\n", regs.rax);
+		ft_printf("%d\n", sysret);//regs.rax);
 }
 
-void		print_data(pid_t tracee, struct user_regs_struct regs) {
+void		print_data(pid_t tracee, struct user_regs_struct regs, int sysret) {
 	if (SYS64 == 1)
-		print64(tracee, regs);
+		print64(tracee, regs, sysret);
 	//else
 	//	printf("Syscall num %d: %s\n", regs.orig_rax, sysinfo_86[regs.orig_rax].sysname);
 	//printf("Syscall num: %d\n", regs.orig_rax);
@@ -196,6 +196,54 @@ void		init_blocked(sigset_t *blocked) {
 	sigaddset(blocked, SIGTERM);
 }
 
+void		print_sigcode_chld(int code)
+{
+	const char		sys_code[6][14] = {"CLD_EXITED", "CLD_KILLED", "CLD_DUMPED", "CLD_TRAPPED", "CLD_STOPPED", "CLD_CONTINUED"};
+
+	ft_putstr(sys_code[code - 1]);
+}
+
+int			sig_handle(pid_t pid, int status)
+{
+	int signalNumber = WSTOPSIG(status);
+
+	if (!(signalNumber == SIGHUP || signalNumber == SIGINT || signalNumber == SIGQUIT || signalNumber == SIGPIPE || signalNumber == SIGTERM || signalNumber == SIGCHLD))
+		return (-1);
+	siginfo_t	info;
+	if (ptrace(PTRACE_GETSIGINFO, pid, 0, &info) == -1) {
+		perror("ptrace getsiginfo");
+		exit(EXIT_FAILURE);
+	}
+	#define SIG_NB 6
+	const char		signame[SIG_NB][8] = {"SIGHUP", "SIGINT", "SIGQUIT", "SIGPIPE", "SIGTERM", "SIGCHLD"};
+	const int		sig_id[SIG_NB] = {1, 2, 3, 13, 15, 17};
+	const void		(*print_sigcode[SIG_NB])(int code) = {NULL, NULL, NULL, NULL, NULL, &print_sigcode_chld};
+	int		idx;
+	for (idx = 0; idx < SIG_NB; idx++)
+		if (sig_id[idx] == info.si_signo)
+			break;
+	int		idx2;
+	for (idx2 = 0; idx2 < SIG_NB; idx2++)
+		if (sig_id[idx2] == signalNumber)
+			break;
+	ft_printf("--- %s {si_signo=%s, si_code=", signame[idx2], signame[idx]);
+	print_sigcode[idx](info.si_code);
+	ft_printf(", si_pid=%d, si_uid=%d, si_status=%d, si_utime=%d, si_stime=%d} ---\n", info.si_pid, info.si_uid, info.si_status, info.si_utime, info.si_stime);
+/*	printf("hup %d int %d quit %d pipe %d term %d chld %d\n", SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM, SIGCHLD);
+	printf("Process stopped due to signal: %d\n", signalNumber);
+	printf("Signal code: %d\n", info.si_code);
+	printf("Signal errno: %d\n", info.si_errno);
+	printf("Signal signo: %d\n", info.si_signo);*/
+	//ptrace(PTRACE_SYSCALL, tracee, 0, 0)
+	//ptrace(PTRACE_CONT, pid, 0, 0);
+	return (0);
+}
+
+void		siguwu(void) {
+	printf("Caught a sigint\n");
+	exit(0);
+}
+
 int			main(int argc, char **argv, char **env) {
 	pid_t		tracee;
 	int			status;
@@ -203,6 +251,7 @@ int			main(int argc, char **argv, char **env) {
 	int			i = 0;
 	sigset_t	empty;
 	sigset_t	blocked;
+	int			sysret;
 
 	struct iovec io;
 	struct user_regs_struct regs;
@@ -213,6 +262,7 @@ int			main(int argc, char **argv, char **env) {
 		j++;
 	if (argc == 1)
 		exit_error(argv[0], "needs argument");
+	signal(SIGINT, siguwu);
 	if ((tracee = fork()) == -1)
 		exit_error(argv[0], "fork failed");
 	if (tracee == 0) { 
@@ -224,6 +274,10 @@ int			main(int argc, char **argv, char **env) {
 			exit_error(argv[0], "ptrace error on PTRACE_SEIZE");
 		sigemptyset(&empty);
 		init_blocked(&blocked);
+		sigprocmask(SIG_SETMASK, &empty, NULL);
+		waitpid(tracee, NULL, 0);
+		sigprocmask(SIG_BLOCK, &blocked, NULL);
+		ptrace(PTRACE_SYSCALL, tracee, 0, 0);
 		sigprocmask(SIG_SETMASK, &empty, NULL);
 		waitpid(tracee, NULL, 0);
 		sigprocmask(SIG_BLOCK, &blocked, NULL);
@@ -239,14 +293,14 @@ int			main(int argc, char **argv, char **env) {
 			waitpid(tracee, &status, 0);
 			sigprocmask(SIG_BLOCK, &blocked, NULL);
 			if (WIFEXITED(status)) {
-				
-				printf("Child exited\n");
+				printf("Child exited 0\n");
 				break ;
 			}
 			ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
-			if (i == 0)
-				;
-			else if (i == 1 && regs.orig_rax == 59)
+			//print_reg(regs);
+			sysret = regs.rax;
+			printf("-- uwu ---\n");
+			if (regs.orig_rax == 59)
 			{
 				ft_printf("execve(\"%s\", [", argv[1]);
 				for (int j = 1; j < argc; j++)
@@ -258,8 +312,7 @@ int			main(int argc, char **argv, char **env) {
 				ft_printf("], %p /* %d vars */) = %d\n", env, j, regs.rax);
 			}
 			else
-				print_data(tracee, regs);
-			i++;
+				print_data(tracee, regs, regs.rax);
 			if ((ret = ptrace(PTRACE_SYSCALL, tracee, 0, 0)) == -1)
 			{
 				printf("Probleme with %s\n", strerror(errno));
@@ -269,9 +322,31 @@ int			main(int argc, char **argv, char **env) {
 			waitpid(tracee, &status, 0);
 			sigprocmask(SIG_BLOCK, &blocked, NULL);
 			if (WIFEXITED(status)) {
-				printf("Child exited\n");
+				printf("Child exited 1\n");
 				break ;
 			}
+			ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
+			printf("-- owo ---\n");
+			print_data(tracee, regs, sysret);
+			if (WIFSTOPPED(status))
+			{
+				if (sig_handle(tracee, status) != -1)
+				{
+					if ((ret = ptrace(PTRACE_SYSCALL, tracee, 0, 0)) == -1)
+					{
+						printf("Probleme with %s\n", strerror(errno));
+						exit_error(argv[0], "ptrace error on PTRACE_SYSCALL");
+					}
+					sigprocmask(SIG_SETMASK, &empty, NULL);
+					waitpid(tracee, &status, 0);
+					sigprocmask(SIG_BLOCK, &blocked, NULL);
+					if (WIFEXITED(status)) {
+						printf("Child exited 2\n");
+						break ;
+					}
+				}
+			}
+			i++;
 		}
 		wait(NULL);
 		printf("A little cozy over here\n");

@@ -6,6 +6,8 @@
 
 # include "../libft/include/libft.h"
 # include <stdio.h>
+# include <stdlib.h>
+# include <signal.h>
 # include <sys/ptrace.h>
 # include <sys/wait.h>
 # include <sys/user.h>
@@ -13,6 +15,7 @@
 # include <errno.h>
 # include <elf.h>
 # include <stdbool.h>
+//# include <sys/siginfo.h>
 
 void		exit_error(char *name, char *msg);
 void	*read_process_memory(pid_t pid, unsigned long addr, int size);
