@@ -1,0 +1,17 @@
+ALRM: R
+HUP: Q (caught)
+INT: Q (normal)
+KILL: Q (uncaught)
+PIPE: Q (normal)
+POLL: Q (caught ?)
+PROFF: Q (caught ?)
+TERM: Q (caught)
+USR1: Q (caught ?)
+USR2: Q (caught ?)
+QUIT: Q (caught)
+ABRT: Q (caught ?)
+TRAP: Q (caught ?)
+SEGV: Q (caught ?)
+ILL: Q (caught ?)
+FPE: Q (caught ?)
+

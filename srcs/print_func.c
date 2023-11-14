@@ -92,6 +92,11 @@ void		print_charptr(char *str) {
 		}
 		else
 			write(1, str + i, 1);
+		if (i == 31)
+		{
+			write(1, "\"...", 4);
+			return ;
+		}
 		i++;
 	}
 	write(1, "\"", 1);
@@ -108,6 +113,11 @@ void		print_ucharptr(unsigned char *str) {
 		}
 		else
 			write(1, str + i, 1);
+		if (i == 31)
+		{
+			write(1, "\"...", 4);
+			return ;
+		}
 		i++;
 	}
 	write(1, "\"", 1);
@@ -124,6 +134,11 @@ void		print_constcharptr(const char *str) {
 		}
 		else
 			write(1, str + i, 1);
+		if (i == 31)
+		{
+			write(1, "\"...", 4);
+			return ;
+		}
 		i++;
 	}
 	write(1, "\"", 1);
@@ -132,7 +147,11 @@ void		print_constcharptr(const char *str) {
 void		print_charptrptr(const char **array) {
 	int		i = 0;
 
+	ft_printf("[");
 	while (array[i]) {
-		printf("%s, ", array[i]);
+		ft_printf("-%c-, ", array[i][0]);
+		i++;
+		break;
 	}
+	ft_printf("] -- %d printed", i);
 }

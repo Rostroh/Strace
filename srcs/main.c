@@ -65,9 +65,8 @@ void	*read_process_memory(pid_t pid, unsigned long addr, int size) {
 void		print_tamales(pid_t pid, unsigned long reg, int type) {
 	void	*ptr;
 	switch (type) {
-		//case UNKNOWN:
-		//	break;
 		case INT://1
+		case PID_T:
 			print_int((int)reg);
 			break;
 		case UINT://2
@@ -111,19 +110,14 @@ void		print_tamales(pid_t pid, unsigned long reg, int type) {
 	}
 }
 
+
+pid_t		s_tracee;
+int			s_nbargs;
+char		**s_args;
+
 #define NB_SPEC 3
 
-bool		is_regs(int sysid)
-{
-	static int	sysspec[] = {0, 17, 318};
-
-	for (int i = 0; i < NB_SPEC; i++)
-		if (sysspec[i] == sysid)
-			return (true);
-	return (false);
-}
-
-bool		print_spec(pid_t pid, struct user_regs_struct regs)
+bool		print_spec(pid_t pid, struct user_regs_struct regs, int read)
 {
 	static int	sysspec[] = {0, 17, 318};
 
@@ -131,9 +125,19 @@ bool		print_spec(pid_t pid, struct user_regs_struct regs)
 		if (sysspec[i] == regs.orig_rax)
 			switch (i) {
 			case 0:
+				if (read == 1)
+				{
+					finish_read(pid, regs);
+					return false;
+				}
 				print_read(pid, regs);
 				return true;
 			case 1:
+				if (read == 1)
+				{
+					finish_read(pid, regs);
+					return false;
+				}
 				print_pread64(pid, regs);
 				return true;
 			case 2:
@@ -143,10 +147,11 @@ bool		print_spec(pid_t pid, struct user_regs_struct regs)
 	return false;
 }
 
-void		print64(pid_t tracee, struct user_regs_struct regs, int sysret) {
-	ft_printf("%s(", sysinfo_64[regs.orig_rax].sysname);
-	if (print_spec(tracee, regs))
-		;//print_spec(tracee, regs);
+int			print64(pid_t tracee, struct user_regs_struct regs, int read) {
+	if (read != 1)
+		ft_printf("%s(", sysinfo_64[regs.orig_rax].sysname);
+	if (print_spec(tracee, regs, read))
+		return (1);//print_spec(tracee, regs);
 	else
 	{
 		if (sysinfo_64[regs.orig_rax].p1 != 0) {
@@ -173,183 +178,237 @@ void		print64(pid_t tracee, struct user_regs_struct regs, int sysret) {
 			print_tamales(tracee, regs.r9, sysinfo_64[regs.orig_rax].p6);
 		}
 	}
-	ft_printf(")\t\t = ");
+	return (0);
+/*	ft_printf(")\t\t = ");
 	if (sysinfo_64[regs.orig_rax].ret == 1)
-		ft_printf("%p\n", sysret);//regs.rax);
+		ft_printf("%llp\n", regs.rax);
 	else
-		ft_printf("%d\n", sysret);//regs.rax);
+		ft_printf("%d\n", regs.rax);*/
 }
 
-void		print_data(pid_t tracee, struct user_regs_struct regs, int sysret) {
+int			print_data(pid_t tracee, struct user_regs_struct regs, int read) {
 	if (SYS64 == 1)
-		print64(tracee, regs, sysret);
+		return (print64(tracee, regs, read));
 	//else
 	//	printf("Syscall num %d: %s\n", regs.orig_rax, sysinfo_86[regs.orig_rax].sysname);
 	//printf("Syscall num: %d\n", regs.orig_rax);
 }
 
-void		init_blocked(sigset_t *blocked) {
-	sigaddset(blocked, SIGHUP);
-	sigaddset(blocked, SIGINT);
-	sigaddset(blocked, SIGQUIT);
-	sigaddset(blocked, SIGPIPE);
-	sigaddset(blocked, SIGTERM);
-}
-
-void		print_sigcode_chld(int code)
+void		print_sigcode_chld(siginfo_t info, int code)
 {
 	const char		sys_code[6][14] = {"CLD_EXITED", "CLD_KILLED", "CLD_DUMPED", "CLD_TRAPPED", "CLD_STOPPED", "CLD_CONTINUED"};
 
-	ft_putstr(sys_code[code - 1]);
+	ft_printf("--- SIGCHLD {si_signo=SIGCHLD, si_code=%s, si_pid=%d, si_uid=%d, si_status=%d, si_utime=%d, si_stime=%d} ---\n", sys_code[code - 1], info.si_pid, info.si_uid, info.si_status, info.si_utime, info.si_stime);
+}
+
+void		print_sigcode_int(siginfo_t info, int code)
+{
+	const int		sys_val[8] = {-6, -5, -4, -3, -2, -1, 0, 0x80};
+	const char		sys_code[8][11] = {"SI_TKILL", "SI_SIGIO", "SI_ASYNCIO", "SI_MESGQ", "SI_TIMER", "SI_QUEUE", "SI_USER", "SI_KERNEL"};
+
+	ft_putstr("--- SIGINT {si_signo=SIGINT, si_code=");
+	for (int i = 0; i < 8; i++)
+	{
+		if (sys_val[i] == code)
+		{
+			ft_putstr(sys_code[i]);
+			break ;
+		}
+	}
+	ft_printf(", si_pid=%d, si_uid=%d} ---\n", info.si_pid, info.si_uid);
+}
+
+void		print_sigcode_segv(siginfo_t info, int code)
+{
+	const int		sys_val[2] = {1, 2};
+	const char		sys_code[2][12] = {"SEGV_MAPERR", "SEGV_ACCERR"};
+
+	ft_putstr("--- SIGSEGV {si_signo=SIGSEGV, si_code=");
+	for (int i = 0; i < 2; i++)
+	{
+		if (sys_val[i] == code)
+		{
+			ft_putstr(sys_code[i]);
+			break ;
+		}
+	}
+	if (info.si_addr)
+		ft_printf(", si_addr=%p} ---\n", info.si_addr);
+	else
+		ft_printf(", si_addr=NULL\n");
+	ft_printf("+++ killed by SIGSEGV (core dumped) +++\n");
+	ft_printf("[1]\t%d segmentation fault (core dumped)\n", getpid());
+	exit(0);
+}
+
+void		print_sigcode_fpe(siginfo_t info, int code)
+{
+	const int		sys_val[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+	const char		sys_code[8][12] = {"FPE_INTDIV", "FPE_INTOVF", "FPE_FLTDIV", "FPE_FLTOVF", "FPE_FLTUND", "FPE_FLTRES", "FPE_FLTINV", "FPE_FLTSUB"};
+
+	ft_putstr("--- SIGFPE {si_signo=SIGFPE, si_code=");
+	for (int i = 0; i < 2; i++)
+	{
+		if (sys_val[i] == code)
+		{
+			ft_putstr(sys_code[i]);
+			break ;
+		}
+	}
+	ft_printf(", si_addr=%p} ---\n", info.si_addr);
+	ft_printf("+++ killed by SIGFPE (core dumped) +++\n");
+	ft_printf("[1]\t%d Floating point exception (core dumped)\n", getpid());
+	exit(0);
+}
+
+void		print_sigcode_bus(siginfo_t info, int code)
+{
+	const int		sys_val[3] = {1, 2, 3};
+	const char		sys_code[3][11] = {"BUS_ADRALN", "BUS_ADRERR", "BUS_OBJERR"};
+
+	ft_putstr("--- SIGBUS {si_signo=SIGBUS, si_code=");
+	for (int i = 0; i < 2; i++)
+	{
+		if (sys_val[i] == code)
+		{
+			ft_putstr(sys_code[i]);
+			break ;
+		}
+	}
+	ft_printf(", si_addr=%p} ---\n", info.si_addr);
+	ft_printf("+++ killed by SIGBUS (core dumped) +++\n");
+	ft_printf("[1]\t%d bus error (core dumped)\n", getpid());
+	exit(0);
+}
+
+void		print_sigcode_ill(siginfo_t info, int code)
+{
+	const int		sys_val[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+	const char		sys_code[8][11] = {"ILL_ILLOPC", "ILL_ILLOPN", "ILL_ILLADR", "ILL_ILLTRP", "ILL_PRVOPC", "ILL_PRVREG", "ILL_COPROC", "ILL_BADSTK"};
+
+	ft_putstr("--- SIGILL {si_signo=SIGILL, si_code=");
+	for (int i = 0; i < 2; i++)
+	{
+		if (sys_val[i] == code)
+		{
+			ft_putstr(sys_code[i]);
+			break ;
+		}
+	}
+	ft_printf(", si_addr=%p} ---\n", info.si_addr);
+	ft_printf("+++ killed by SIGILL (core dumped) +++\n");
+	ft_printf("[1]\t%d illegal instruction (core dumped)\n", getpid());
+	exit(0);
+}
+
+void		print_sigcode_poll(siginfo_t info, int code)
+{
+	const int		sys_val[6] = {1, 2, 3, 4, 5, 6};
+	const char		sys_code[6][9] = {"POLL_IN", "POLL_OUT", "POLL_MSG", "POLL_ERR", "POLL_PRI", "POLL_HUP"};
+
+	ft_putstr("--- SIGPOLL {si_signo=SIGPOLL, si_code=");
+	for (int i = 0; i < 6; i++)
+	{
+		if (sys_val[i] == code)
+		{
+			ft_putstr(sys_code[i]);
+			break ;
+		}
+	}
+	ft_printf(", si_band=%ld, si_fd=%d} ---\n", info.si_band, info.si_fd);
+}
+
+void		print_sigcode_winch(siginfo_t info, int code)
+{
+	const int		sys_val[8] = {-6, -5, -4, -3, -2, -1, 0, 0x80};
+	const char		sys_code[8][11] = {"SI_TKILL", "SI_SIGIO", "SI_ASYNCIO", "SI_MESGQ", "SI_TIMER", "SI_QUEUE", "SI_USER", "SI_KERNEL"};
+
+	ft_putstr("--- SIGWINCH {si_signo=SIGWINCH, si_code=");
+	for (int i = 0; i < 8; i++)
+	{
+		if (sys_val[i] == code)
+		{
+			ft_putstr(sys_code[i]);
+			break ;
+		}
+	}
+	ft_printf(", si_pid=%d, si_uid=%d} ---\n", info.si_pid, info.si_uid);
 }
 
 int			sig_handle(pid_t pid, int status)
 {
 	int signalNumber = WSTOPSIG(status);
 
-	if (!(signalNumber == SIGHUP || signalNumber == SIGINT || signalNumber == SIGQUIT || signalNumber == SIGPIPE || signalNumber == SIGTERM || signalNumber == SIGCHLD))
+	if (signalNumber == SIGTRAP || signalNumber == SIGSTOP)
 		return (-1);
 	siginfo_t	info;
 	if (ptrace(PTRACE_GETSIGINFO, pid, 0, &info) == -1) {
 		perror("ptrace getsiginfo");
 		exit(EXIT_FAILURE);
 	}
-	#define SIG_NB 6
-	const char		signame[SIG_NB][8] = {"SIGHUP", "SIGINT", "SIGQUIT", "SIGPIPE", "SIGTERM", "SIGCHLD"};
-	const int		sig_id[SIG_NB] = {1, 2, 3, 13, 15, 17};
-	const void		(*print_sigcode[SIG_NB])(int code) = {NULL, NULL, NULL, NULL, NULL, &print_sigcode_chld};
-	int		idx;
-	for (idx = 0; idx < SIG_NB; idx++)
-		if (sig_id[idx] == info.si_signo)
-			break;
-	int		idx2;
-	for (idx2 = 0; idx2 < SIG_NB; idx2++)
-		if (sig_id[idx2] == signalNumber)
-			break;
-	ft_printf("--- %s {si_signo=%s, si_code=", signame[idx2], signame[idx]);
-	print_sigcode[idx](info.si_code);
-	ft_printf(", si_pid=%d, si_uid=%d, si_status=%d, si_utime=%d, si_stime=%d} ---\n", info.si_pid, info.si_uid, info.si_status, info.si_utime, info.si_stime);
-/*	printf("hup %d int %d quit %d pipe %d term %d chld %d\n", SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM, SIGCHLD);
-	printf("Process stopped due to signal: %d\n", signalNumber);
-	printf("Signal code: %d\n", info.si_code);
-	printf("Signal errno: %d\n", info.si_errno);
-	printf("Signal signo: %d\n", info.si_signo);*/
-	//ptrace(PTRACE_SYSCALL, tracee, 0, 0)
-	//ptrace(PTRACE_CONT, pid, 0, 0);
+	#define SIG_NB 8
+	const int		sig_id[SIG_NB] = {SIGSEGV, SIGINT, SIGILL, SIGBUS, SIGFPE, SIGCHLD, SIGPOLL, SIGWINCH};
+	const void		(*print_sigcode[SIG_NB])(siginfo_t info, int code) = {&print_sigcode_segv, &print_sigcode_int, &print_sigcode_ill, &print_sigcode_bus, &print_sigcode_fpe, &print_sigcode_chld, &print_sigcode_poll, &print_sigcode_winch};
+
+	for (int i = 0; i < SIG_NB; i++)
+	{
+		if (sig_id[i] == info.si_signo)
+		{
+			print_sigcode[i](info, info.si_code);
+			break ;
+		}
+	}
 	return (0);
 }
 
-void		siguwu(void) {
-	printf("Caught a sigint\n");
+void		sig_handler(int sig) {
+	const int		sig_id[5] = {SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM};
+
+	ft_printf("Process %u detached\n <detached ...>\n", s_tracee);
+	switch (sig) {
+		case 2:
+		case 13:
+			wait(NULL);
+			exit(0);
+		case 1:
+			ft_printf("[1]\t%d %s", getpid(), "hangup");
+		case 3:
+			ft_printf("[1]\t%d %s", getpid(), "quit (core dumped)");
+		case 15:
+			ft_printf("[1]\t%d %s", getpid(), "terminated");
+	}
+	for (int i = 0; i < s_nbargs; i++)
+		ft_printf("%s ", s_args[i]);
+	ft_printf("\n");
+	waitpid(s_tracee, NULL, 0);
 	exit(0);
+}
+
+void		init_signal()
+{
+	signal(SIGHUP, &sig_handler);
+	signal(SIGINT, &sig_handler);
+	signal(SIGPIPE, &sig_handler);
+	signal(SIGTERM, &sig_handler);
+	signal(SIGQUIT, &sig_handler);
 }
 
 int			main(int argc, char **argv, char **env) {
 	pid_t		tracee;
-	int			status;
-	int			ret = 0;
-	int			i = 0;
-	sigset_t	empty;
-	sigset_t	blocked;
-	int			sysret;
 
-	struct iovec io;
-	struct user_regs_struct regs;
-	io.iov_base = &regs;
-	io.iov_len = sizeof(regs);
-	int	j = 0;
-	while (env[j])
-		j++;
 	if (argc == 1)
 		exit_error(argv[0], "needs argument");
-	signal(SIGINT, siguwu);
 	if ((tracee = fork()) == -1)
 		exit_error(argv[0], "fork failed");
+	s_tracee = tracee;
+	s_nbargs = argc;
+	s_args = argv;
+	init_signal();
 	if (tracee == 0) { 
 		raise(SIGSTOP);
 		execve(argv[1], argv + 1, env);
 	}
-	else {
-		if (ptrace(PTRACE_SEIZE, tracee, 0, 0) == -1)
-			exit_error(argv[0], "ptrace error on PTRACE_SEIZE");
-		sigemptyset(&empty);
-		init_blocked(&blocked);
-		sigprocmask(SIG_SETMASK, &empty, NULL);
-		waitpid(tracee, NULL, 0);
-		sigprocmask(SIG_BLOCK, &blocked, NULL);
-		ptrace(PTRACE_SYSCALL, tracee, 0, 0);
-		sigprocmask(SIG_SETMASK, &empty, NULL);
-		waitpid(tracee, NULL, 0);
-		sigprocmask(SIG_BLOCK, &blocked, NULL);
-		if (ptrace(PTRACE_INTERRUPT, tracee, 0, 0) == -1)
-			exit_error(argv[0], "ptrace error on PTRACE_INTERRUPT");
-		while (1) {
-			if ((ret = ptrace(PTRACE_SYSCALL, tracee, 0, 0)) == -1)
-			{
-				printf("Probleme with %s\n", strerror(errno));
-				exit_error(argv[0], "ptrace error on PTRACE_SYSCALL");
-			}
-			sigprocmask(SIG_SETMASK, &empty, NULL);
-			waitpid(tracee, &status, 0);
-			sigprocmask(SIG_BLOCK, &blocked, NULL);
-			if (WIFEXITED(status)) {
-				printf("Child exited 0\n");
-				break ;
-			}
-			ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
-			//print_reg(regs);
-			sysret = regs.rax;
-			printf("-- uwu ---\n");
-			if (regs.orig_rax == 59)
-			{
-				ft_printf("execve(\"%s\", [", argv[1]);
-				for (int j = 1; j < argc; j++)
-				{
-					ft_printf("\"%s\"", *(argv + j));
-					if (j + 1 < argc)
-						ft_printf(", ");
-				}
-				ft_printf("], %p /* %d vars */) = %d\n", env, j, regs.rax);
-			}
-			else
-				print_data(tracee, regs, regs.rax);
-			if ((ret = ptrace(PTRACE_SYSCALL, tracee, 0, 0)) == -1)
-			{
-				printf("Probleme with %s\n", strerror(errno));
-				exit_error(argv[0], "ptrace error on PTRACE_SYSCALL");
-			}
-			sigprocmask(SIG_SETMASK, &empty, NULL);
-			waitpid(tracee, &status, 0);
-			sigprocmask(SIG_BLOCK, &blocked, NULL);
-			if (WIFEXITED(status)) {
-				printf("Child exited 1\n");
-				break ;
-			}
-			ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
-			printf("-- owo ---\n");
-			print_data(tracee, regs, sysret);
-			if (WIFSTOPPED(status))
-			{
-				if (sig_handle(tracee, status) != -1)
-				{
-					if ((ret = ptrace(PTRACE_SYSCALL, tracee, 0, 0)) == -1)
-					{
-						printf("Probleme with %s\n", strerror(errno));
-						exit_error(argv[0], "ptrace error on PTRACE_SYSCALL");
-					}
-					sigprocmask(SIG_SETMASK, &empty, NULL);
-					waitpid(tracee, &status, 0);
-					sigprocmask(SIG_BLOCK, &blocked, NULL);
-					if (WIFEXITED(status)) {
-						printf("Child exited 2\n");
-						break ;
-					}
-				}
-			}
-			i++;
-		}
-		wait(NULL);
-		printf("A little cozy over here\n");
-	}
+	else
+		ft_strace(tracee);
 	return (0);
 }

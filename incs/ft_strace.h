@@ -17,8 +17,11 @@
 # include <stdbool.h>
 //# include <sys/siginfo.h>
 
+extern pid_t	p_tracee;
+
+void		ft_strace(pid_t tracee);
 void		exit_error(char *name, char *msg);
-void	*read_process_memory(pid_t pid, unsigned long addr, int size);
+void		*read_process_memory(pid_t pid, unsigned long addr, int size);
 
 //OUTPUT TYPE_FUNCS
 void		print_int(int nb);

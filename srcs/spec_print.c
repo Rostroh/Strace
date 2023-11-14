@@ -28,18 +28,30 @@ void		print_buffer(pid_t pid, unsigned long addr, int size, bool byte)
 	ft_printf("\"");
 }
 
+void		finish_read(pid_t pid, struct user_regs_struct regs)
+{
+	print_buffer(pid, regs.rsi, regs.rdx, false);
+	ft_printf(", %d", regs.rdx);
+}
+
 void		print_read(pid_t pid, struct user_regs_struct regs)
 {
 	ft_printf("%d, ", regs.rdi);
+//	print_buffer(pid, regs.rsi, regs.rdx, false);
+//	ft_printf(", %d", regs.rdx);
+}
+
+void		finish_pread64(pid_t pid, struct user_regs_struct regs)
+{
 	print_buffer(pid, regs.rsi, regs.rdx, false);
-	ft_printf(", %d", regs.rdx);
+	ft_printf(", %d, %d", regs.rdx, regs.r10);
 }
 
 void		print_pread64(pid_t pid, struct user_regs_struct regs)
 {
 	ft_printf("%d, ", regs.rdi);
-	print_buffer(pid, regs.rsi, regs.rdx, false);
-	ft_printf(", %d, %d", regs.rdx, regs.r10);
+//	print_buffer(pid, regs.rsi, regs.rdx, false);
+//	ft_printf(", %d, %d", regs.rdx, regs.r10);
 }
 
 void		print_getrandom(pid_t pid, struct user_regs_struct regs)
