@@ -61,7 +61,7 @@ void		ft_strace(pid_t tracee)
 	int				i = 0;
 
 	struct iovec io;
-	struct user_regs_struct regs;
+	struct user_regs_struct_32 regs;
 	io.iov_base = &regs;
 	io.iov_len = sizeof(regs);
 	sigemptyset(&empty);
