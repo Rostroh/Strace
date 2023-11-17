@@ -40,14 +40,38 @@ int			ptrace_continue(pid_t tracee, sigset_t empty, sigset_t blocked, int signal
 	return (ptrace_wait(tracee, empty, blocked));
 }
 
-void		print_sysreturn(struct user_regs_struct regs)
+void		print_sysreturn(struct user_regs_struct regs, int arch)
 {
 	ft_printf(")\t\t = ");
-	if (sysinfo_64[regs.orig_rax].ret == 1)
-		ft_printf("%llp\n", regs.rax);
-	else
-		ft_printf("%d\n", regs.rax);
+	if (arch == 64)
+	{
+		if (sysinfo_64[regs.orig_rax].ret == 1)
+			ft_printf("%llp\n", regs.rax);
+		else
+			ft_printf("%d\n", regs.rax);
+		return ;
+	}
+	t_user_regs32	*r32;
+	r32 = (t_user_regs32*)&regs;
 
+	if (r32->orig_eax < 0 || r32->orig_eax >= 386) {
+		printf("0\n");
+		return ;
+	}
+	if (sysinfo_32[r32->orig_eax].ret == 1)
+		ft_printf("%llp\n", r32->eax);
+	else
+		ft_printf("%d\n", r32->eax);
+}
+
+int			get_return(struct user_regs_struct regs, int arch)
+{
+	if (arch == 64)
+		return (regs.rdi);
+	t_user_regs32	*r32;
+
+	r32 = (t_user_regs32 *)(&regs);
+	return (r32->ebx);
 }
 
 void		ft_strace(pid_t tracee)
@@ -62,13 +86,16 @@ void		ft_strace(pid_t tracee)
 
 	struct iovec io;
 	struct user_regs_struct regs;
+	t_user_regs32	r32;
 	io.iov_base = &regs;
+
 	io.iov_len = sizeof(regs);
 	sigemptyset(&empty);
 	init_blocked(&blocked);
 	if (ptrace(PTRACE_SEIZE, tracee, 0, 0) == -1)
 		exit(0);
 	ptrace_wait(tracee, empty, blocked);
+	int				arch = 64;
 	if (ptrace(PTRACE_INTERRUPT, tracee, 0, 0) == -1)
 		exit(0);//_error(argv[0], "ptrace error on PTRACE_INTERRUPT");
 	ptrace_continue(tracee, empty, blocked, 0);
@@ -76,15 +103,29 @@ void		ft_strace(pid_t tracee)
 		if (ptrace_continue(tracee, empty, blocked, 0) != 0)
 			break;
 		ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
-		if (regs.orig_rax == 231)
-			ret = regs.rdi;
-		read = print_data(tracee, regs, 0, arch, i);
+		if (io.iov_len == sizeof(t_user_regs32) && arch == 64)
+		{
+			ft_printf("[ Process PID=%d runs in 32 bit mode. ]\n", tracee);
+			arch = 32;
+		}
+		else if (io.iov_len == sizeof(regs) && arch == 32)
+		{
+			ft_printf("[ Process PID=%d runs in 64 bit mode. ]\n", tracee);
+			arch = 64;
+		}
+		if (regs.orig_rax == 231 /*orig_rax == 252*/)
+			ret = get_return(regs, arch);
+		read = print_data(tracee, regs, 0, arch);
 		if (ptrace_continue(tracee, empty, blocked, 0) != 0)
 			break ;
 		ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
+		if (io.iov_len == sizeof(t_user_regs32))
+			arch == 32;
+		else
+			arch == 64;
 		if (read == 1)
-			print_data(tracee, regs, read, arch, i);
-		print_sysreturn(regs);
+			print_data(tracee, regs, read, arch);
+		print_sysreturn(regs, arch);
 	}
 	wait(NULL);
 	ft_printf(") =\t\t?\n");

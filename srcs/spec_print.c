@@ -69,7 +69,6 @@ void		print_getrandom(pid_t pid, struct user_regs_struct regs)
 
 void		finish_wait4(pid_t pid, struct user_regs_struct regs)
 {
-	ft_printf("owo ???");
 	print_voidptr((void*)regs.rsi);
 	ft_printf(", %d, ", regs.rdx);
 	print_voidptr((void*)regs.r10);

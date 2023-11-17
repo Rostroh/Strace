@@ -11,13 +11,36 @@
 # include <sys/ptrace.h>
 # include <sys/wait.h>
 # include <sys/user.h>
-# include <sys/uio.h>
 # include <errno.h>
 # include <elf.h>
 # include <stdbool.h>
+# include <fcntl.h>
 //# include <sys/siginfo.h>
+#define _GNU_SOURCE
+# include <sys/uio.h>
 
 extern pid_t	p_tracee;
+
+typedef struct	s_user_regs_struct_32
+{
+	uint32_t ebx;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t esi;
+    uint32_t edi;
+    uint32_t ebp;
+    uint32_t eax;
+    uint16_t ds, __ds;
+    uint16_t es, __es;
+    uint16_t fs, __fs;
+    uint16_t gs, __gs;
+    uint32_t orig_eax;
+    uint32_t eip;
+    uint16_t cs, __cs;
+    uint32_t eflags;
+    uint32_t esp;
+    uint16_t ss, __ss;
+}				t_user_regs32;
 
 void		ft_strace(pid_t tracee);
 void		exit_error(char *name, char *msg);

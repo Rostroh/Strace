@@ -12,6 +12,10 @@ void		print_sizet(size_t size) {
 	ft_printf("%lu", size);
 }
 
+void		print_hex(unsigned int nb) {
+	ft_printf("0x%x", nb);
+}
+
 void		print_intptr(int *ptr) {
 	ft_printf("%d", *ptr);
 }

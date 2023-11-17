@@ -1,6 +1,6 @@
 NAME = ./ft_strace
 
-SRC = main.c ft_strace.c print_func.c spec_print.c
+SRC = main.c ft_strace.c signals.c generic_print.c print_func.c spec_print.c spec_print32.c
 
 OBJ = $(SRC:.c=.o)
 
@@ -19,7 +19,7 @@ LIB_DIR = ./libft
 LFT = $(LIB_DIR)/$(LIBFT)
 LIB = -L $(LIB_DIR) -l$(LIBFT:lib%.a=%)
 
-FLG = -Wno-format #-Wall -Werror -Wextra
+FLG = -Wno-format -Wall -Werror -Wextra
 
 CC = gcc
 
