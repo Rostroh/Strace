@@ -94,32 +94,32 @@ bool		print_spec32(pid_t pid, t_user_regs32 regs, int read)
 
 int			print64(pid_t tracee, struct user_regs_struct regs, int read) {
 	if (read != 1)
-		ft_printf("%s(", sysinfo_64[regs.orig_rax].sysname);
+		fprintf(stderr, "%s(", sysinfo_64[regs.orig_rax].sysname);
 	if (print_spec(tracee, regs, read))
-		return (1);//print_spec(tracee, regs);
+		return (1);
 	else if (read != 1)
 	{
 		if (sysinfo_64[regs.orig_rax].p1 != 0) {
 			print_tamales(tracee, regs.rdi, sysinfo_64[regs.orig_rax].p1);
 		}
 		if (sysinfo_64[regs.orig_rax].p2 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.rsi, sysinfo_64[regs.orig_rax].p2);
 		}
 		if (sysinfo_64[regs.orig_rax].p3 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.rdx, sysinfo_64[regs.orig_rax].p3);
 		}
 		if (sysinfo_64[regs.orig_rax].p4 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.r10, sysinfo_64[regs.orig_rax].p4);
 		}
 		if (sysinfo_64[regs.orig_rax].p5 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.r8, sysinfo_64[regs.orig_rax].p5);
 		}
 		if (sysinfo_64[regs.orig_rax].p6 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.r9, sysinfo_64[regs.orig_rax].p6);
 		}
 	}
@@ -128,32 +128,32 @@ int			print64(pid_t tracee, struct user_regs_struct regs, int read) {
 
 int			print32(pid_t tracee, t_user_regs32 regs, int read) {
 	if (read != 1)
-		ft_printf("%s(", sysinfo_32[regs.orig_eax].sysname);
+		fprintf(stderr, "%s(", sysinfo_32[regs.orig_eax].sysname);
 	if (print_spec32(tracee, regs, read))
-		return (1);//print_spec(tracee, regs);
+		return (1);
 	if (read != 1)
 	{
 		if (sysinfo_32[regs.orig_eax].p1 != 0) {
 			print_tamales(tracee, regs.ebx, sysinfo_32[regs.orig_eax].p1);
 		}
 		if (sysinfo_32[regs.orig_eax].p2 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.ecx, sysinfo_32[regs.orig_eax].p2);
 		}
 		if (sysinfo_32[regs.orig_eax].p3 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.edx, sysinfo_32[regs.orig_eax].p3);
 		}
 		if (sysinfo_32[regs.orig_eax].p4 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.esi, sysinfo_32[regs.orig_eax].p4);
 		}
 		if (sysinfo_32[regs.orig_eax].p5 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.edi, sysinfo_32[regs.orig_eax].p5);
 		}
 		if (sysinfo_32[regs.orig_eax].p6 != 0) {
-			ft_printf(", ");
+			fprintf(stderr, ", ");
 			print_tamales(tracee, regs.ebp, sysinfo_32[regs.orig_eax].p6);
 		}
 	}
@@ -171,8 +171,5 @@ int			print_data(pid_t tracee, struct user_regs_struct regs, int read, int arch)
 		return (print32(tracee, *tmp, read));
 	}
 	return (0);
-	//else
-	//	printf("Syscall num %d: %s\n", regs.orig_rax, sysinfo_86[regs.orig_rax].sysname);
-	//printf("Syscall num: %d\n", regs.orig_rax);
 }
 

@@ -4,24 +4,24 @@ void		print_buffer(pid_t pid, unsigned long addr, int size, bool byte)
 {
 	char		*ptr;
 
-	ft_printf("\"");
+	fprintf(stderr, "\"");
 	if ((ptr = (char*)read_process_memory(pid, addr, size)))
 	{
 		for (int i = 0; i < size; i++)
 		{
 			if (byte)
-				ft_printf("\\x%x", ptr[i]);
+				fprintf(stderr, "\\x%x", ptr[i]);
 			else
 			{
 				if (ft_isprint(ptr[i]))
-					ft_printf("%c", ptr[i]);
+					fprintf(stderr, "%c", ptr[i]);
 				else if (ptr[i] == '\n')
-					ft_printf("\\n");
+					fprintf(stderr, "\\n");
 				else
-					ft_printf("\\%d", ptr[i]);
+					fprintf(stderr, "\\%d", ptr[i]);
 				if (i == 28)
 				{
-					ft_printf("\"...");
+					fprintf(stderr, "\"...");
 					return ;
 				}
 			}
@@ -33,29 +33,29 @@ void		print_buffer(pid_t pid, unsigned long addr, int size, bool byte)
 void		finish_read(pid_t pid, struct user_regs_struct regs)
 {
 	print_buffer(pid, regs.rsi, regs.rdx, false);
-	ft_printf(", %d", regs.rdx);
+	fprintf(stderr, ", %d", regs.rdx);
 }
 
 void		print_read(struct user_regs_struct regs)
 {
-	ft_printf("%d, ", regs.rdi);
+	fprintf(stderr, "%d, ", regs.rdi);
 }
 
 void		finish_pread64(pid_t pid, struct user_regs_struct regs)
 {
 	print_buffer(pid, regs.rsi, regs.rdx, false);
-	ft_printf(", %d, %d", regs.rdx, regs.r10);
+	fprintf(stderr, ", %d, %d", regs.rdx, regs.r10);
 }
 
 void		print_pread64(struct user_regs_struct regs)
 {
-	ft_printf("%d, ", regs.rdi);
+	fprintf(stderr, "%d, ", regs.rdi);
 }
 
 void		finish_getrandom(pid_t pid, struct user_regs_struct regs)
 {
 	print_buffer(pid, regs.rdi, regs.rsi, true);
-	ft_printf(", %d, %d", regs.rsi, regs.rdx);
+	fprintf(stderr, ", %d, %d", regs.rsi, regs.rdx);
 }
 
 void		print_getrandom(void)
@@ -66,18 +66,18 @@ void		print_getrandom(void)
 void		finish_wait4(struct user_regs_struct regs)
 {
 	print_voidptr((void*)regs.rsi);
-	ft_printf(", %d, ", regs.rdx);
+	fprintf(stderr, ", %d, ", regs.rdx);
 	print_voidptr((void*)regs.r10);
 }
 
 void		print_wait4(struct user_regs_struct regs)
 {
-	ft_printf("%d, ", regs.rdi);
+	fprintf(stderr, "%d, ", regs.rdi);
 }
 
 void		print_write(pid_t pid, struct user_regs_struct regs)
 {
-	ft_printf("%d, ", regs.rdi);
+	fprintf(stderr, "%d, ", regs.rdi);
 	print_buffer(pid, regs.rsi, regs.rdx, false);
-	ft_printf(", %d", regs.rdx);
+	fprintf(stderr, ", %d", regs.rdx);
 }

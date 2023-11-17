@@ -42,26 +42,26 @@ int			ptrace_continue(pid_t tracee, sigset_t empty, sigset_t blocked, int signal
 
 void		print_sysreturn(struct user_regs_struct regs, int arch)
 {
-	ft_printf(")\t\t = ");
+	fprintf(stderr, ")\t\t = ");
 	if (arch == 64)
 	{
 		if (sysinfo_64[regs.orig_rax].ret == 1)
-			ft_printf("%llp\n", regs.rax);
+			fprintf(stderr, "%llp\n", regs.rax);
 		else
-			ft_printf("%d\n", regs.rax);
+			fprintf(stderr, "%d\n", regs.rax);
 		return ;
 	}
 	t_user_regs32	*r32;
 	r32 = (t_user_regs32*)&regs;
 
 	if (r32->orig_eax >= 386) {
-		printf("0\n");
+		fprintf(stderr, "0\n");
 		return ;
 	}
 	if (sysinfo_32[r32->orig_eax].ret == 1)
-		ft_printf("%llp\n", r32->eax);
+		fprintf(stderr, "%llp\n", r32->eax);
 	else
-		ft_printf("%d\n", r32->eax);
+		fprintf(stderr, "%d\n", r32->eax);
 }
 
 int			get_return(struct user_regs_struct regs, int arch)
@@ -93,7 +93,7 @@ void		ft_strace(pid_t tracee)
 	ptrace_wait(tracee, empty, blocked);
 	int				arch = 64;
 	if (ptrace(PTRACE_INTERRUPT, tracee, 0, 0) == -1)
-		exit(0);//_error(argv[0], "ptrace error on PTRACE_INTERRUPT");
+		exit(0);
 	ptrace_continue(tracee, empty, blocked, 0);
 	while (1) {
 		if (ptrace_continue(tracee, empty, blocked, 0) != 0)
@@ -101,12 +101,12 @@ void		ft_strace(pid_t tracee)
 		ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
 		if (io.iov_len == sizeof(t_user_regs32) && arch == 64)
 		{
-			ft_printf("[ Process PID=%d runs in 32 bit mode. ]\n", tracee);
+			fprintf(stderr, "[ Process PID=%d runs in 32 bit mode. ]\n", tracee);
 			arch = 32;
 		}
 		else if (io.iov_len == sizeof(regs) && arch == 32)
 		{
-			ft_printf("[ Process PID=%d runs in 64 bit mode. ]\n", tracee);
+			fprintf(stderr, "[ Process PID=%d runs in 64 bit mode. ]\n", tracee);
 			arch = 64;
 		}
 		if (regs.orig_rax == 231 /*orig_rax == 252*/)
@@ -124,7 +124,6 @@ void		ft_strace(pid_t tracee)
 		print_sysreturn(regs, arch);
 	}
 	wait(NULL);
-	ft_printf(") =\t\t?\n");
-	ft_printf("+++ exited with %u +++\n", ret);
-	//printf("A little cozy over here\n");
+	fprintf(stderr, ") =\t\t?\n");
+	fprintf(stderr, "+++ exited with %u +++\n", ret);
 }

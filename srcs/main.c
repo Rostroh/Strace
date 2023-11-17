@@ -1,7 +1,7 @@
 #include "ft_strace.h"
 
 void		exit_error(char *name, char *msg) {
-	printf("Error: %s %s\n", name, msg);
+	fprintf(stderr, "Error: %s %s\n", name, msg);
 	exit(0);
 }
 
@@ -52,7 +52,7 @@ void	*read_process_memory(pid_t pid, unsigned long addr, int size) {
     ssize_t bytesRead = process_vm_readv(pid, local, 1, remote, 1, 0);
 
     if (bytesRead < 0) {
-		printf("\n%s\n", strerror(errno));
+		fprintf(stderr, "\n%s\n", strerror(errno));
         //perror("process_vm_readv");
         exit(EXIT_FAILURE);
     }
@@ -96,19 +96,19 @@ void		print_tamales(pid_t pid, unsigned long reg, int type) {
 			if ((ptr = read_process_memory(pid, reg, 256)))
 				print_charptr((char*)ptr);
 			else
-				ft_printf("NULL");
+				fprintf(stderr, "NULL");
 			break;
 		case UNSIGNED_CHAR_PTR://21
 			if ((ptr = read_process_memory(pid, reg, 256)))
 				print_ucharptr((unsigned char*)ptr);
 			else
-				ft_printf("NULL");
+				fprintf(stderr, "NULL");
 			break;
 		case CONST_CHAR_PTR://22
 			if ((ptr = read_process_memory(pid, reg, 256)))
 				print_constcharptr((const char*)ptr);
 			else
-				ft_printf("NULL");
+				fprintf(stderr, "NULL");
 			break;
 		default:
 			print_voidptr((void*)reg);
@@ -122,7 +122,7 @@ char		**s_args;
 void		sig_handler(int sig) {
 	//const int		sig_id[5] = {SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM};
 
-	ft_printf("Process %u detached\n <detached ...>\n", s_tracee);
+	fprintf(stderr, "Process %u detached\n <detached ...>\n", s_tracee);
 	switch (sig) {
 		case 2:
 		case 13:
@@ -139,8 +139,8 @@ void		sig_handler(int sig) {
 			break;
 	}
 	for (int i = 0; i < s_nbargs; i++)
-		ft_printf("%s ", s_args[i]);
-	ft_printf("\n");
+		fprintf(stderr, "%s ", s_args[i]);
+	fprintf(stderr, "\n");
 	kill(s_tracee, sig);
 	exit(0);
 }
