@@ -93,19 +93,19 @@ void		print_tamales(pid_t pid, unsigned long reg, int type) {
 			print_u64((uint64_t)reg);
 			break;
 		case CHAR_PTR://20
-			if (ptr = read_process_memory(pid, reg, 256))
+			if ((ptr = read_process_memory(pid, reg, 256)))
 				print_charptr((char*)ptr);
 			else
 				ft_printf("NULL");
 			break;
 		case UNSIGNED_CHAR_PTR://21
-			if (ptr = read_process_memory(pid, reg, 256))
+			if ((ptr = read_process_memory(pid, reg, 256)))
 				print_ucharptr((unsigned char*)ptr);
 			else
 				ft_printf("NULL");
 			break;
 		case CONST_CHAR_PTR://22
-			if (ptr = read_process_memory(pid, reg, 256))
+			if ((ptr = read_process_memory(pid, reg, 256)))
 				print_constcharptr((const char*)ptr);
 			else
 				ft_printf("NULL");
@@ -120,21 +120,23 @@ int			s_nbargs;
 char		**s_args;
 
 void		sig_handler(int sig) {
-	const int		sig_id[5] = {SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM};
+	//const int		sig_id[5] = {SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM};
 
 	ft_printf("Process %u detached\n <detached ...>\n", s_tracee);
 	switch (sig) {
 		case 2:
 		case 13:
-			wait(NULL);
 			kill(s_tracee, sig);
 			exit(0);
 		case 1:
 			ft_printf("[1]\t%d %s", getpid(), "hangup");
+			break;
 		case 3:
 			ft_printf("[1]\t%d %s", getpid(), "quit (core dumped)");
+			break;
 		case 15:
 			ft_printf("[1]\t%d %s", getpid(), "terminated");
+			break;
 	}
 	for (int i = 0; i < s_nbargs; i++)
 		ft_printf("%s ", s_args[i]);
@@ -152,37 +154,11 @@ void		init_signal()
 	signal(SIGQUIT, &sig_handler);
 }
 
-int			get_arch(char *exec)
-{
-	Elf64_Ehdr elf_header;
-	int fd = open(exec, O_RDONLY);
-
-	if (fd == -1) {
-		perror("open");
-		exit(EXIT_FAILURE);
-	}
-	if (read(fd, &elf_header, sizeof(Elf64_Ehdr)) != sizeof(Elf64_Ehdr)) {
-		close(fd);
-		exit(EXIT_FAILURE);
-	}
-	if (elf_header.e_ident[EI_CLASS] == ELFCLASS32) {
-		close(fd);
-		return 32;
-	} else if (elf_header.e_ident[EI_CLASS] == ELFCLASS64) {
-		close(fd);
-		return 64;
-	}
-	return (-1);
-}
-
 int			main(int argc, char **argv, char **env) {
-	int			arch;
 	pid_t		tracee;
 
 	if (argc == 1)
 		exit_error(argv[0], "needs argument");
-	if ((arch = get_arch(argv[1])) == -1)
-		exit_error(argv[0], "wrong arch");
 	if ((tracee = fork()) == -1)
 		exit_error(argv[0], "fork failed");
 	s_tracee = tracee;

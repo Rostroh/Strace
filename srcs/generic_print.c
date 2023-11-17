@@ -9,7 +9,7 @@ bool		print_spec(pid_t pid, struct user_regs_struct regs, int read)
 				finish_read(pid, regs);
 				return false;
 			}
-			print_read(pid, regs);
+			print_read(regs);
 			return true;
 		case 17:
 			if (read == 1)
@@ -17,7 +17,7 @@ bool		print_spec(pid_t pid, struct user_regs_struct regs, int read)
 				finish_pread64(pid, regs);
 				return false;
 			}
-			print_pread64(pid, regs);
+			print_pread64(regs);
 			return true;
 		case 318:
 			if (read == 1)
@@ -25,7 +25,7 @@ bool		print_spec(pid_t pid, struct user_regs_struct regs, int read)
 				finish_getrandom(pid, regs);
 				return false;
 			}
-			print_getrandom(pid, regs);
+			print_getrandom();
 			return true;
 		case 1:
 			if (read == 1)
@@ -35,10 +35,10 @@ bool		print_spec(pid_t pid, struct user_regs_struct regs, int read)
 		case 61:
 			if (read == 1)
 			{
-				finish_wait4(pid, regs);
+				finish_wait4(regs);
 				return false;
 			}
-			print_wait4(pid, regs);
+			print_wait4(regs);
 			return true;
 		default:
 			return false;
@@ -55,7 +55,7 @@ bool		print_spec32(pid_t pid, t_user_regs32 regs, int read)
 				finish_read_32(pid, regs);
 				return false;
 			}
-			print_read_32(pid, regs);
+			print_read_32(regs);
 			return true;
 		case 180:
 			if (read == 1)
@@ -63,7 +63,7 @@ bool		print_spec32(pid_t pid, t_user_regs32 regs, int read)
 				finish_pread64_32(pid, regs);
 				return false;
 			}
-			print_pread64_32(pid, regs);
+			print_pread64_32(regs);
 			return true;
 		case 355:
 			if (read == 1)
@@ -71,7 +71,7 @@ bool		print_spec32(pid_t pid, t_user_regs32 regs, int read)
 				finish_getrandom_32(pid, regs);
 				return false;
 			}
-			print_getrandom_32(pid, regs);
+			print_getrandom_32();
 			return true;
 		case 4:
 			if (read == 1)
@@ -81,10 +81,10 @@ bool		print_spec32(pid_t pid, t_user_regs32 regs, int read)
 		case 114:
 			if (read == 1)
 			{
-				finish_wait4_32(pid, regs);
+				finish_wait4_32(regs);
 				return false;
 			}
-			print_wait4_32(pid, regs);
+			print_wait4_32(regs);
 			return true;
 		default:
 			return false;

@@ -141,7 +141,7 @@ STRUCT_RSEQ};
 
 
 //according to https://x64.syscall.sh/
-static s_syscall_info sysinfo_64[] = {
+static s_syscall_info __attribute__((used)) sysinfo_64[] = {
     {"read", UINT, CHAR_PTR, SIZE_T, 0, 0, 0, 0},
     {"write", UINT, CONST_CHAR_PTR, SIZE_T, 0, 0, 0, 0},
     {"open", CONST_CHAR_PTR, INT, UMODE_T, 0, 0, 0, 0},
@@ -479,8 +479,7 @@ static s_syscall_info sysinfo_64[] = {
 	{"rseq", STRUCT_RSEQ, U32, INT, HEX, 0, 0, 0}
 };
 
-
-static s_syscall_info sysinfo_32[] = {
+static s_syscall_info __attribute__((used)) sysinfo_32[] = {
     {"restart_syscall", 0, 0, 0, 0, 0, 0, 0},
     {"exit", INT, 0, 0, 0, 0, 0, 0},
     {"fork", 0, 0, 0, 0, 0, 0, 0},

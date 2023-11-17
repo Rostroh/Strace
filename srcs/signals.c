@@ -154,7 +154,7 @@ int			sig_handle(pid_t pid, int status)
 	}
 	#define SIG_NB 8
 	const int		sig_id[SIG_NB] = {SIGSEGV, SIGINT, SIGILL, SIGBUS, SIGFPE, SIGCHLD, SIGPOLL, SIGWINCH};
-	const void		(*print_sigcode[SIG_NB])(siginfo_t info, int code) = {&print_sigcode_segv, &print_sigcode_int, &print_sigcode_ill, &print_sigcode_bus, &print_sigcode_fpe, &print_sigcode_chld, &print_sigcode_poll, &print_sigcode_winch};
+	void			(*print_sigcode[SIG_NB])(siginfo_t info, int code) = {&print_sigcode_segv, &print_sigcode_int, &print_sigcode_ill, &print_sigcode_bus, &print_sigcode_fpe, &print_sigcode_chld, &print_sigcode_poll, &print_sigcode_winch};
 
 	for (int i = 0; i < SIG_NB; i++)
 	{

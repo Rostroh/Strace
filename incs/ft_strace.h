@@ -1,6 +1,7 @@
 #ifndef FT_STRACE_H
 # define FT_STRACE_H
 
+#define _GNU_SOURCE
 # include "syscallx86.h"
 //# include "syscall.h"
 
@@ -16,7 +17,6 @@
 # include <stdbool.h>
 # include <fcntl.h>
 //# include <sys/siginfo.h>
-#define _GNU_SOURCE
 # include <sys/uio.h>
 
 extern pid_t	p_tracee;
@@ -44,12 +44,17 @@ typedef struct	s_user_regs_struct_32
 
 void		ft_strace(pid_t tracee);
 void		exit_error(char *name, char *msg);
+int			sig_handle(pid_t pid, int status);
 void		*read_process_memory(pid_t pid, unsigned long addr, int size);
+int			print_data(pid_t tracee, struct user_regs_struct regs, int read, int arch);
+void		print_tamales(pid_t pid, unsigned long reg, int type);
+void		print_buffer(pid_t pid, unsigned long addr, int size, bool byte);
 
 //OUTPUT TYPE_FUNCS
 void		print_int(int nb);
 void		print_uint(unsigned int nb);
 void		print_sizet(size_t size);
+void		print_hex(unsigned int nb);
 void		print_intptr(int *ptr);
 void		print_constintptr(const int *ptr);
 void		print_uintptr(unsigned int *ptr);
@@ -72,7 +77,24 @@ void		print_charptrptr(const char **array);
 
 
 //OUTPUT SYSCALL_FUNCS
-void		print_read(pid_t pid, struct user_regs_struct regs);
-void		print_pread64(pid_t pid, struct user_regs_struct regs);
-void		print_getrandom(pid_t pid, struct user_regs_struct regs);
+void		finish_read(pid_t pid, struct user_regs_struct regs);
+void		print_read(struct user_regs_struct regs);
+void		finish_pread64(pid_t pid, struct user_regs_struct regs);
+void		print_pread64(struct user_regs_struct regs);
+void		finish_getrandom(pid_t pid, struct user_regs_struct regs);
+void		print_getrandom(void);
+void		finish_wait4(struct user_regs_struct regs);
+void		print_wait4(struct user_regs_struct regs);
+void		print_write(pid_t pid, struct user_regs_struct regs);
+
+//OUTPUT SYSCALL32_FUNCS
+void		finish_read_32(pid_t pid, t_user_regs32 regs);
+void		print_read_32(t_user_regs32 regs);
+void		finish_pread64_32(pid_t pid, t_user_regs32 regs);
+void		print_pread64_32(t_user_regs32 regs);
+void		finish_getrandom_32(pid_t pid, t_user_regs32 regs);
+void		print_getrandom_32(void);
+void		finish_wait4_32(t_user_regs32 regs);
+void		print_wait4_32(t_user_regs32 regs);
+void		print_write_32(pid_t pid, t_user_regs32 regs);
 #endif

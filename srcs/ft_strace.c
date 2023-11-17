@@ -54,7 +54,7 @@ void		print_sysreturn(struct user_regs_struct regs, int arch)
 	t_user_regs32	*r32;
 	r32 = (t_user_regs32*)&regs;
 
-	if (r32->orig_eax < 0 || r32->orig_eax >= 386) {
+	if (r32->orig_eax >= 386) {
 		printf("0\n");
 		return ;
 	}
@@ -78,15 +78,11 @@ void		ft_strace(pid_t tracee)
 {
 	sigset_t		empty;
 	sigset_t		blocked;
-	int				sysret;
-	int				status;
 	int				read;
 	unsigned char	ret = 0;
-	int				i = 0;
 
 	struct iovec io;
 	struct user_regs_struct regs;
-	t_user_regs32	r32;
 	io.iov_base = &regs;
 
 	io.iov_len = sizeof(regs);
@@ -120,9 +116,9 @@ void		ft_strace(pid_t tracee)
 			break ;
 		ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
 		if (io.iov_len == sizeof(t_user_regs32))
-			arch == 32;
+			arch = 32;
 		else
-			arch == 64;
+			arch = 64;
 		if (read == 1)
 			print_data(tracee, regs, read, arch);
 		print_sysreturn(regs, arch);
