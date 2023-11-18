@@ -126,7 +126,7 @@ void		sig_handler(int sig) {
 	switch (sig) {
 		case 2:
 		case 13:
-			kill(s_tracee, sig);
+			ptrace(PTRACE_SYSCALL, s_tracee, 0, 0);
 			exit(0);
 		case 1:
 			ft_printf("[1]\t%d %s", getpid(), "hangup");
@@ -141,7 +141,7 @@ void		sig_handler(int sig) {
 	for (int i = 0; i < s_nbargs; i++)
 		fprintf(stderr, "%s ", s_args[i]);
 	fprintf(stderr, "\n");
-	kill(s_tracee, sig);
+	ptrace(PTRACE_SYSCALL, s_tracee, 0, 0);
 	exit(0);
 }
 
@@ -156,7 +156,6 @@ void		init_signal()
 
 int			main(int argc, char **argv, char **env) {
 	pid_t		tracee;
-
 	if (argc == 1)
 		exit_error(argv[0], "needs argument");
 	if ((tracee = fork()) == -1)
