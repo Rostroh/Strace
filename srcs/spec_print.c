@@ -22,11 +22,13 @@ void		print_buffer(pid_t pid, unsigned long addr, int size, bool byte)
 				if (i == 28)
 				{
 					fprintf(stderr, "\"...");
+					free(ptr);
 					return ;
 				}
 			}
 		}
 	}
+	free(ptr);
 	ft_printf("\"");
 }
 

@@ -101,13 +101,13 @@ void		ft_strace(pid_t tracee)
 		ptrace(PTRACE_GETREGSET, tracee, NT_PRSTATUS, &io);
 		if (io.iov_len == sizeof(t_user_regs32) && arch == 64)
 		{
-			fprintf(stderr, "[ Process PID=%d runs in 32 bit mode. ]\n", tracee);
 			arch = 32;
+			fprintf(stderr, "[ Process PID=%d runs in 32 bit mode. ]\n", tracee);
 		}
 		else if (io.iov_len == sizeof(regs) && arch == 32)
 		{
-			fprintf(stderr, "[ Process PID=%d runs in 64 bit mode. ]\n", tracee);
 			arch = 64;
+			fprintf(stderr, "[ Process PID=%d runs in 64 bit mode. ]\n", tracee);
 		}
 		if (regs.orig_rax == 231 /*orig_rax == 252*/)
 			ret = get_return(regs, arch);

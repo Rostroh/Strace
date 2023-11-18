@@ -94,19 +94,28 @@ void		print_tamales(pid_t pid, unsigned long reg, int type) {
 			break;
 		case CHAR_PTR://20
 			if ((ptr = read_process_memory(pid, reg, 256)))
+			{
 				print_charptr((char*)ptr);
+				free(ptr);
+			}
 			else
 				fprintf(stderr, "NULL");
 			break;
 		case UNSIGNED_CHAR_PTR://21
 			if ((ptr = read_process_memory(pid, reg, 256)))
+			{
 				print_ucharptr((unsigned char*)ptr);
+				free(ptr);
+			}
 			else
 				fprintf(stderr, "NULL");
 			break;
 		case CONST_CHAR_PTR://22
 			if ((ptr = read_process_memory(pid, reg, 256)))
+			{
 				print_constcharptr((const char*)ptr);
+				free(ptr);
+			}
 			else
 				fprintf(stderr, "NULL");
 			break;
